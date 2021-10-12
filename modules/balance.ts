@@ -1,49 +1,67 @@
-const { balance, transaction, connection } = require('mui-metablockchain-sdk');
+const { did, transaction, connection } = require('mui-metablockchain-sdk');
 const { Keyring, ApiPromise, WsProvider } = require('@polkadot/api');
 
-function getBalance(did, api) {
+async function setBalance(recieverDid, newFree: Number, newReserved: Number, sig_key_pair, api = false) {
     try {
-        return balance.getBalance(did, api);
+        const provider = api || (await connection.buildConnection('local', true));
+
+        const receiverAccountID = await did.resolveDIDToAccount(recieverDid, provider);
+        const tx = provider.tx.balances.setBalance(receiverAccountID, newFree, newReserved);
+
+        await new Promise((resolve, reject) => tx.signAndSend(sig_key_pair, ({ status, dispatchError }: any) => {
+            console.log('Transaction status:', status.type);
+            console.log(JSON.stringify(dispatchError))
+            if (dispatchError) {
+                if (dispatchError.isModule) {
+                    reject('Dispatch Module error');
+                } else {
+                    console.log(dispatchError.toString());
+                    reject('Dispatch error');
+                }
+            } else if (status.isFinalized) {
+                console.log('Finalized block hash', status.asFinalized.toHex());
+                resolve(status.asFinalized.toHex());
+            }
+        }));
     } catch(err) {
+        console.log('Set Balance');
         console.log(err);
         throw new Error('Something went wrong');
     }
 }
 
-async function transfer(toDid, amount, api = false) {
+async function forceTransfer(senderDid: String, recieverDid: String, amount: Number, sig_key_pair, api = false) {
     try {
         const provider = api || (await connection.buildConnection('local', true));
 
-        const keyring = new Keyring({ type: 'sr25519' });
-        const sig_key_pair = await keyring.addFromUri('//Alice');
-        console.log(sig_key_pair);
+        const senderAccountID = await did.resolveDIDToAccount(senderDid, provider);
 
-        await transaction.sendTransaction(sig_key_pair, toDid, amount, provider);
+        const recieverAccountID = await did.resolveDIDToAccount(recieverDid, provider);
+        const tx = provider.tx.balances.forceTransfer(senderAccountID, recieverAccountID, amount);
+
+        await new Promise((resolve, reject) => tx.signAndSend(sig_key_pair, ({ status, dispatchError }: any) => {
+            console.log('Transaction status:', status.type);
+            console.log(JSON.stringify(dispatchError))
+            if (dispatchError) {
+                if (dispatchError.isModule) {
+                    reject('Dispatch Module error');
+                } else {
+                    console.log(dispatchError.toString());
+                    reject('Dispatch error');
+                }
+            } else if (status.isFinalized) {
+                console.log('Finalized block hash', status.asFinalized.toHex());
+                resolve(status.asFinalized.toHex());
+            }
+        }));
     } catch(err) {
-        console.log('Transfer Amount')
-        console.log(err);
-        throw new Error('Something went wrong');
-    }
-}
-
-async function transferWithMemo(toDid, amount, memo, api = false) {
-    try {
-        const provider = api || (await connection.buildConnection('local', true));
-
-        const keyring = new Keyring({ type: 'sr25519' });
-        const sig_key_pair = await keyring.addFromUri('//Alice');
-        console.log(sig_key_pair);
-
-        await transaction.transfer(sig_key_pair, toDid, amount, memo, provider);
-    } catch(err) {
-        console.log('Transfer Amount With Memo');
+        console.log('Set Balance');
         console.log(err);
         throw new Error('Something went wrong');
     }
 }
 
 export {
-    getBalance,
-    transfer,
-    transferWithMemo,
+    setBalance,
+    forceTransfer,
 }
