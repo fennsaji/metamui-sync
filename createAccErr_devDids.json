@@ -1,0 +1,56 @@
+[
+  {
+    "error": {},
+    "account": {
+      "did": "did:ssid:swn",
+      "accountId": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+      "metadata": "0x546573744d65746164617461",
+      "value": {
+        "nonce": 0,
+        "refcount": 0,
+        "data": {
+          "free": 1007999000,
+          "reserved": 0,
+          "miscFrozen": 0,
+          "feeFrozen": 0
+        }
+      }
+    }
+  },
+  {
+    "error": {},
+    "account": {
+      "did": "xxyyzz",
+      "accountId": "5DGZsCnHBg9NfDqbBrCmqMyVE9mhj4MpZEh9JpkT9sdqBojL",
+      "metadata": "0x",
+      "value": {
+        "nonce": 0,
+        "refcount": 0,
+        "data": {
+          "free": 0,
+          "reserved": 0,
+          "miscFrozen": 0,
+          "feeFrozen": 0
+        }
+      }
+    }
+  },
+  {
+    "error": {},
+    "account": {
+      "did": "xxyyzz",
+      "accountId": "5DGZsCnHBg9NfDqbBrCmqMyVE9mhj4MpZEh9JpkT9sdqBojL",
+      "metadata": "0x",
+      "value": {
+        "nonce": 0,
+        "refcount": 0,
+        "data": {
+          "free": 0,
+          "reserved": 0,
+          "miscFrozen": 0,
+          "feeFrozen": 0
+        }
+      }
+    }
+  }
+]
