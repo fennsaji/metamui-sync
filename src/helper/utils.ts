@@ -1,5 +1,11 @@
 import { u8aToString } from "@polkadot/util";
 
+function sleep(ms){
+  new Promise((res, rej) => {
+    setTimeout(res, ms);
+  })
+}
+
 function didEqual(didA, didB) {
   if (didA.did !== didB.did) {
     return false;
@@ -139,4 +145,5 @@ export {
   didEqual,
   checkDidsEqual,
   bytesToString,
+  sleep,
 }

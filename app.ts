@@ -1,4 +1,5 @@
-import { syncDids } from "./src/sync-did";
+import { syncDids } from "./src/sync-dids";
+import { syncValidators } from "./src/sync-validator-set";
 
 async function main() {
 
@@ -10,7 +11,9 @@ async function main() {
 
 
   // Sync Did from one node to another
-  await syncDids(devUrl, localUrl);
+  // await syncDids(devUrl, localUrl);
+
+  await syncValidators(devUrl, localUrl);
 }
 
 main();
