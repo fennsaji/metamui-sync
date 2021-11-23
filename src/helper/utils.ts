@@ -1,3 +1,4 @@
+import { ApiPromise, WsProvider } from "@polkadot/api";
 import { u8aToString } from "@polkadot/util";
 
 function sleep(ms){
@@ -26,24 +27,27 @@ function didEqual(didA, didB) {
 }
 
 function checkDidsEqual(didsA, didsB) {
-  didsA.forEach((dd: any) => {
+  return didsA.map((didB: any) => {
     try {
-      let locObj: any = didsB.find((d: any) => d.did == dd.did);
-      console.log(dd, " & ", locObj);
-      if (!locObj || !locObj.value) {
-        console.log('Data Imcomplete', locObj);
-        return;
+      let didA: any = didsB.find((d: any) => d.did == didB.did);
+      console.log(didB, " & ", didA);
+      if (!didA || !didA.value) {
+        console.log('Data Imcomplete', didA);
+        return {didA, didB};
       }
-      if (!dd || !dd.value) {
-        console.log('Data Imcomplete', dd);
-        return;
+      if (!didB || !didB.value) {
+        console.log('Data Imcomplete', didB);
+        return {didA, didB};
       }
-      console.log("Equal", didEqual(dd, locObj));
+      let isEqual = didEqual(didB, didA);
+      console.log("Equal", isEqual);
+      return isEqual ? null: {didA, didB};
     }
     catch (err) {
       console.log(err);
+      return {didA: {}, didB};
     }
-  })
+  }).filter(didGroup => !!didGroup);
 }
 
 const bytesToString = (inputBytes) => u8aToString(inputBytes).replace(/^\0+/, '').replace(/\0+$/, '');
@@ -139,6 +143,14 @@ const METABLOCKCHAIN_TYPES = {
   }
 }
 
+function createConnection(wsUrl) {
+  const provider = new WsProvider(wsUrl);
+  return ApiPromise.create({
+    provider,
+    types: METABLOCKCHAIN_TYPES,
+  });
+}
+
 
 export {
   METABLOCKCHAIN_TYPES,
@@ -146,4 +158,5 @@ export {
   checkDidsEqual,
   bytesToString,
   sleep,
+  createConnection,
 }

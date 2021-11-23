@@ -41,7 +41,7 @@ async function getDidAndSync(didString, fromUrl, toUrl) {
   }
   let pubKey = (await providerSyncTo.query.did.lookup(sanDidString)).toJSON();
   try {
-    await setBalance(didObject.did, didObject.value.data.free, didObject.value.data.reserved, rootKeyPair, providerSyncTo);
+    await setBalance(didObject.did, didObject.value.data.free, didObject.value.data.reserved, rootKeyPair, providerSyncTo, -1);
   } catch (err) {
     console.log(err);
   }

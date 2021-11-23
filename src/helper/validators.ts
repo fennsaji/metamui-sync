@@ -28,7 +28,21 @@ async function setValidator(didString, signingKeypair, api, nonce) {
   });
 }
 
+function checkValidatorsEqual(nodeAValidators, nodeBValidators) {
+  if(nodeAValidators.length != nodeBValidators.length) {
+    return false;
+  }
+  let flag = true;
+  nodeAValidators.forEach(validator => {
+    if(!nodeBValidators.includes(validator)) {
+      flag = false;
+    }
+  });
+  return flag;
+}
+
 export {
   getValidators,
   setValidator,
+  checkValidatorsEqual,
 }
