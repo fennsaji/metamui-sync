@@ -30,17 +30,18 @@ function checkDidsEqual(didsA, didsB) {
   return didsA.map((didB: any) => {
     try {
       let didA: any = didsB.find((d: any) => d.did == didB.did);
-      console.log(didB, " & ", didA);
       if (!didA || !didA.value) {
-        console.log('Data Imcomplete', didA);
+        console.log('Data Incomplete A', didA);
         return {didA, didB};
       }
       if (!didB || !didB.value) {
-        console.log('Data Imcomplete', didB);
+        console.log('Data Incomplete B', didB);
         return {didA, didB};
       }
       let isEqual = didEqual(didB, didA);
-      console.log("Equal", isEqual);
+      if(!isEqual) {
+        console.log("Not Equal:", didB, " & ", didA);
+      }
       return isEqual ? null: {didA, didB};
     }
     catch (err) {
@@ -75,7 +76,7 @@ const METABLOCKCHAIN_TYPES = {
   "CurrencyId": "u32",
   "Amount": "i64",
   "Memo": "Vec<u8>",
-  "AccountInfo": "AccountInfoWithDualRefCount",
+  "AccountInfo": "AccountInfoWithRefCount",
   "VC": {
     "hash": "Hash",
     "owner": "Did",
@@ -97,16 +98,16 @@ const METABLOCKCHAIN_TYPES = {
     "token_name": "[u8;16]",
     "reservable_balance": "u128",
     "decimal": "u8",
-    "currency_code": "[u8;8]"
+    "currency_code": "Bytes"
   },
   "SlashMintTokens": {
     "vc_id": "VCid",
-    "currency_id": "CurrencyId",
+    "currency_code": "CurrencyCode",
     "amount": "u128"
   },
   "TokenTransferVC": {
     "vc_id": "VCid",
-    "currency_id": "CurrencyId",
+    "currency_code": "CurrencyCode",
     "amount": "u128"
   },
   "VCHash": "Vec<u8>",
@@ -122,7 +123,8 @@ const METABLOCKCHAIN_TYPES = {
   "TokenDetails": {
     "token_name": "Bytes",
     "currency_code": "Bytes",
-    "decimal": "u8"
+    "decimal": "u8",
+    "block_number": "BlockNumber"
   },
   "TokenBalance": "u128",
   "TokenAccountData": {
@@ -134,16 +136,20 @@ const METABLOCKCHAIN_TYPES = {
     "nonce": "u32",
     "data": "TokenAccountData"
   },
-  "Votes": {
-    "index": "ProposalIndex",
-    "threshold": "MemberCount",
-    "ayes": "Vec<Did>",
-    "nays": "Vec<Did>",
-    "end": "BlockNumber"
+  "CurrencyCode": "[u8;8]",
+  "StorageVersion": {
+    "_enum": [
+      "V1_0_0",
+      "V2_0_0",
+      "V3_0_0"
+    ]
   }
 }
 
-function createConnection(wsUrl) {
+
+
+
+async function createConnection(wsUrl) {
   const provider = new WsProvider(wsUrl);
   return ApiPromise.create({
     provider,

@@ -18,7 +18,7 @@ async function setBalance(recieverDid, newFree: Number, newReserved: Number, sig
                     console.log(dispatchError.toString());
                     reject('Dispatch error');
                 }
-            } else if (status.isFinalized) {
+            } else if (status.isInBlock) {
                 console.log('Finalized block hash', status.asFinalized.toHex());
                 resolve(status.asFinalized.toHex());
             }
@@ -49,7 +49,7 @@ async function forceTransfer(senderDid: String, recieverDid: String, amount: Num
                     console.log(dispatchError.toString());
                     reject('Dispatch error');
                 }
-            } else if (status.isFinalized) {
+            } else if (status.isInBlock) {
                 console.log('Finalized block hash', status.asFinalized.toHex());
                 resolve(status.asFinalized.toHex());
             }

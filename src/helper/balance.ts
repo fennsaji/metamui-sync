@@ -11,7 +11,7 @@ async function setBalance(receiverAccountID, free, reserved, signingKeypair, pro
         await tx.signAndSend(signingKeypair, { nonce }, function ({ status, dispatchError }) {
           if (dispatchError) {
             reject(new Error(dispatchError.toString()));
-          } else if (status.isFinalized) {
+          } else if (status.isInBlock) {
             resolve('Success');
           }
         });

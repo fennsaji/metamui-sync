@@ -20,7 +20,7 @@ async function removeDid(didString: String, sig_key_pair, api = false) {
                     console.log(dispatchError.toString());
                     reject('Dispatch error');
                 }
-            } else if (status.isFinalized) {
+            } else if (status.isInBlock) {
                 console.log('Finalized block hash', status.asFinalized.toHex());
                 resolve(status.asFinalized.toHex());
             }

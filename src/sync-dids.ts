@@ -44,55 +44,50 @@ async function getDidAccountsSnapshot(filePath, providerSyncFrom) {
 }
 
 
-async function syncDidAccounts(latestAccounts, providerSyncTo, rootKeyPair) {
+async function syncDidAccounts(latestAccounts, providerSyncTo, rootKeyPair, nonce) {
   try {
     let didCreateErrorObjects = [];
-    console.log('Total Accounts:', latestAccounts.length);
 
     const keyring = new Keyring({ type: 'sr25519' });
 
     let didPromises = [];
+    const txs = [];
 
-    let nonce: any = (await providerSyncTo.rpc.system.accountNextIndex(rootKeyPair.address)).toJSON();
     for (let i = 0; i < latestAccounts.length; i++) {
       let acc = latestAccounts[i];
-      console.log('Sync Acc Did no:', i + 1);
-      console.log('Sync Acc Data:', acc);
       let didObj = {
         public_key: keyring.decodeAddress(acc.accountId),
         identity: acc.did,
         metadata: acc.metadata,
       };
+      txs.push(
+        providerSyncTo.tx.did.add(didObj.public_key, did.sanitiseDid(didObj.identity), didObj.metadata)
+      );
       didPromises.push(
         storeDIDOnChain(didObj, rootKeyPair, providerSyncTo, nonce)
           .catch(err => {
             didCreateErrorObjects.push({ error: err, account: acc });
+            console.log('Sync Acc Did Error:', acc, err);
             return err;
           })
       );
       nonce = +nonce + 1;
     }
     try {
+      // await storeDIDOnChain(txs, rootKeyPair, providerSyncTo, nonce);
       await Promise.all(didPromises.map(p => p.catch(e => e)));
     } catch (e) {
       console.log(e);
     }
-
-    console.log('Stored data success');
-    fs.writeFileSync('./src/data/creatDidErr.json', JSON.stringify(didCreateErrorObjects), 'utf-8');
-    console.log('Successfull')
 
   } catch (error) {
     console.log(error);
   }
 }
 
-async function syncDidAccountsBalance(latestAccounts, providerSyncTo, rootKeyPair) {
+async function syncDidAccountsBalance(latestAccounts, providerSyncTo, rootKeyPair, nonce) {
   try {
     let setBalanceErrorObjects = [];
-    console.log('Total Accounts:', latestAccounts.length);
-
-    let nonce: any = (await providerSyncTo.rpc.system.accountNextIndex(rootKeyPair.address)).toJSON();
 
     let didsWithAccId = (await Promise.all(latestAccounts.map(async acc => ({
       ...acc,
@@ -102,26 +97,21 @@ async function syncDidAccountsBalance(latestAccounts, providerSyncTo, rootKeyPai
     let setBalPromises = [];
     for (let i = 0; i < didsWithAccId.length; i++) {
       let acc = didsWithAccId[i];
-      console.log('Sync Acc Balance no:', i + 1);
-      console.log('Sync Acc Data:', acc);
       setBalPromises.push(
         setBalance(acc.accountId, acc.value.data.free, acc.value.data.reserved, rootKeyPair, providerSyncTo, nonce)
           .catch(err => {
             setBalanceErrorObjects.push({ error: err, account: acc });
+            console.log('Sync Acc Balance Error:', acc, err);
             return err;
           })
       );
       nonce = +nonce + 1;
     }
     try {
-      const data = await Promise.all(setBalPromises.map(p => p.catch(e => e)));
+      await Promise.all(setBalPromises.map(p => p.catch(e => e)));
     } catch (e) {
       console.log(e);
     }
-
-    console.log('Stored data success');
-    fs.writeFileSync('./src/data/setBalErr.json', JSON.stringify(setBalanceErrorObjects), 'utf-8');
-    console.log('Successfull')
 
   } catch (error) {
     console.log(error);
@@ -129,18 +119,22 @@ async function syncDidAccountsBalance(latestAccounts, providerSyncTo, rootKeyPai
 }
 
 
-async function syncDids(providerSyncFrom, providerSyncTo, rootKeyPair) {
+async function syncDids(providerSyncFrom, providerSyncTo, rootKeyPair, nonce) {
 
   const nodeOneDids = await getDidAccountsSnapshot('./src/data/didNodeOne.json', providerSyncFrom);
-  await syncDidAccounts(nodeOneDids, providerSyncTo, rootKeyPair);
-  await syncDidAccountsBalance(nodeOneDids, providerSyncTo, rootKeyPair);
-  const nodeTwoDids = await getDidAccountsSnapshot('./src/data/didNodeTwo.json', providerSyncTo);
+  await syncDidAccounts(nodeOneDids, providerSyncTo, rootKeyPair, nonce);
+  nonce+=nodeOneDids.length;
+  syncDidAccountsBalance(nodeOneDids, providerSyncTo, rootKeyPair, nonce);
+  nonce+=nodeOneDids.length;
+  console.log('Did Sync Completed');
+  return nonce;
+  // const nodeTwoDids = await getDidAccountsSnapshot('./src/data/didNodeTwo.json', providerSyncTo);
 
   // const devDids = JSON.parse(fs.readFileSync('devDids.json', 'utf-8'));
   // const nodeTwoDids = JSON.parse(fs.readFileSync('nodeTwoDids.json', 'utf-8'));
 
-  let errorDids = checkDidsEqual(nodeOneDids, nodeTwoDids);
-  console.log(errorDids);
+  // let errorDids = checkDidsEqual(nodeOneDids, nodeTwoDids);
+  // console.log(errorDids);
 }
 
 

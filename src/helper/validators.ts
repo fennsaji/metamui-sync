@@ -18,7 +18,7 @@ async function setValidator(didString, signingKeypair, api, nonce) {
       await tx.signAndSend(signingKeypair, {nonce}, function ({ status, dispatchError }){
         if (dispatchError) {
           reject(new Error(dispatchError.toString()));
-        } else if (status.isFinalized) {
+        } else if (status.isReady) {
           resolve('Success');
         }
       });
