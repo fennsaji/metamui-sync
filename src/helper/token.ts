@@ -81,15 +81,8 @@ async function issueToken(
       nonce = nonce ?? await provider.rpc.system.accountNextIndex(senderAccountKeyPair.address);
       let signedTx = tx.sign(senderAccountKeyPair, { nonce });
       await signedTx.send(function ({ status, dispatchError, events }) {
-        if (status.isInBlock || status.isFinalized) {
           events
-            // We know this tx should result in `Sudid` event.
-            // .filter(({ event }) =>
-            //   provider.events.sudo.Sudid.is(event)
-            // )
-            // We know that `Sudid` returns just a `Result`
             .forEach(({ event: { data: [result] } }) => {
-              // Now we look to see if the extrinsic was actually successful or not...
               if (result.isError) {
                 let error = result.asError;
                 if (error.isModule) {
@@ -104,22 +97,9 @@ async function issueToken(
                 }
               }
             });
-        }
-
         if (dispatchError) {
-          if (dispatchError.isModule) {
-            // for module errors, we have the section indexed, lookup
-            const decoded = provider.registry.findMetaError(dispatchError.asModule);
-            const { documentation, name, section } = decoded;
-            // console.log(`${section}.${name}: ${documentation.join(' ')}`);
-            reject(new Error(`${section}.${name}`));
-          } else {
-            // Other, CannotLookup, BadOrigin, no extra info
-            // console.log(dispatchError.toString());
-            reject(new Error(dispatchError.toString()));
-          }
-        } else if (status.isInBlock) {
-          // console.log('Finalized block hash', status.asFinalized.toHex());
+          reject(new Error(dispatchError.toString()));
+        } else if (status.isReady) {
           resolve(signedTx.hash.toHex())
         }
       });

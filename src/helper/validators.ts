@@ -33,7 +33,7 @@ async function setValidator(didString, signingKeypair, api, nonce) {
 
         if (dispatchError) {
           reject(new Error(dispatchError.toString()));
-        } else if (status.isInBlock) {
+        } else if (status.isReady) {
           resolve('Success');
         }
       });

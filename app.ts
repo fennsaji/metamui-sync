@@ -29,9 +29,8 @@ async function main() {
   let nonce: any = (await providerSyncTo.rpc.system.accountNextIndex(rootKeyPair.address)).toJSON();
 
   // Sync Did from one node to another
-  nonce = await syncDids(providerSyncFrom, providerSyncTo, rootKeyPair, nonce);
-
-  nonce = await syncDidsBalance(providerSyncFrom, providerSyncTo, rootKeyPair, nonce);
+  await syncDids(providerSyncFrom, providerSyncTo, rootKeyPair, nonce);
+  await syncDidsBalance(providerSyncFrom, providerSyncTo, rootKeyPair, nonce);
 
   // Sync validators
   syncValidators(providerSyncFrom, providerSyncTo, rootKeyPair, nonce);
@@ -44,7 +43,7 @@ async function main() {
   
   nonce = await syncDidsBalance(providerSyncFrom, providerSyncTo, rootKeyPair, nonce);
 
-  await sleep(10000);
+  await sleep(5000);
 
 
   // Check All data equal
@@ -63,12 +62,13 @@ async function main() {
   // Check if vcs are equal
   let newVcs = await getVCs(providerSyncTo);
   let vcs = await getVCs(providerSyncFrom);
-  console.log('VCS Equal', checkVCsEqual(vcs, newVcs));
+  console.log('VCS Equal:', checkVCsEqual(vcs, newVcs));
 
-  // Check if data equalx
+  // Check if tokens are equal
   let tokenAccounts = (await getTokenAccounts(providerSyncFrom)).filter(ta => ta?.tokenData?.currency_code);
   let newTokenAccounts = (await getTokenAccounts(providerSyncTo)).filter(ta => ta?.tokenData?.currency_code);
   console.log('Token Account Equal:', checkTokenAccountsEqual(tokenAccounts, newTokenAccounts));
+  
   console.log('Finished Sync');
 }
 
