@@ -34,12 +34,12 @@ async function getAllAccountInfo(api = false, hash = null) {
 }
 
 
-async function getDidAccountsSnapshot(filePath, providerSyncFrom) {
+async function getDidAccountsSnapshot(providerSyncFrom) {
   const latestAccounts = await getAllAccountInfo(providerSyncFrom);
   const blockHash = await providerSyncFrom.rpc.chain.getBlockHash(0);
   const accountsAtFirstBlock = await getAllAccountInfo(providerSyncFrom, blockHash);
 
-  fs.writeFileSync(filePath, JSON.stringify(latestAccounts), 'utf-8');
+  // fs.writeFileSync(filePath, JSON.stringify(latestAccounts), 'utf-8');
   return latestAccounts;
 }
 
@@ -60,9 +60,9 @@ async function syncDidAccounts(latestAccounts, providerSyncTo, rootKeyPair, nonc
         identity: acc.did,
         metadata: acc.metadata,
       };
-      txs.push(
-        providerSyncTo.tx.did.add(didObj.public_key, did.sanitiseDid(didObj.identity), didObj.metadata)
-      );
+      // txs.push(
+      //   providerSyncTo.tx.did.add(didObj.public_key, did.sanitiseDid(didObj.identity), didObj.metadata)
+      // );
       didPromises.push(
         storeDIDOnChain(didObj, rootKeyPair, providerSyncTo, nonce)
           .catch(err => {
@@ -120,24 +120,25 @@ async function syncDidAccountsBalance(latestAccounts, providerSyncTo, rootKeyPai
 
 
 async function syncDids(providerSyncFrom, providerSyncTo, rootKeyPair, nonce) {
-
-  const nodeOneDids = await getDidAccountsSnapshot('./src/data/didNodeOne.json', providerSyncFrom);
+  const nodeOneDids = await getDidAccountsSnapshot(providerSyncFrom);
   await syncDidAccounts(nodeOneDids, providerSyncTo, rootKeyPair, nonce);
-  nonce+=nodeOneDids.length;
-  syncDidAccountsBalance(nodeOneDids, providerSyncTo, rootKeyPair, nonce);
   nonce+=nodeOneDids.length;
   console.log('Did Sync Completed');
   return nonce;
-  // const nodeTwoDids = await getDidAccountsSnapshot('./src/data/didNodeTwo.json', providerSyncTo);
+}
 
-  // const devDids = JSON.parse(fs.readFileSync('devDids.json', 'utf-8'));
-  // const nodeTwoDids = JSON.parse(fs.readFileSync('nodeTwoDids.json', 'utf-8'));
-
-  // let errorDids = checkDidsEqual(nodeOneDids, nodeTwoDids);
-  // console.log(errorDids);
+async function syncDidsBalance(providerSyncFrom, providerSyncTo, rootKeyPair, nonce) {
+  nonce = (await providerSyncTo.rpc.system.accountNextIndex(rootKeyPair.address)).toJSON();
+  const nodeOneDids = await getDidAccountsSnapshot(providerSyncFrom);
+  await syncDidAccountsBalance(nodeOneDids, providerSyncTo, rootKeyPair, nonce);
+  nonce+=nodeOneDids.length;
+  console.log('Did Balance Sync Completed');
+  return nonce;
 }
 
 
 export {
   syncDids,
+  syncDidsBalance,
+  getDidAccountsSnapshot,
 }

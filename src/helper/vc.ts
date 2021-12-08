@@ -35,7 +35,7 @@ async function storeVC(vcHex, sudoKeyPair, provider, nonce) {
 
         if (dispatchError) {
           reject(new Error(dispatchError.toString()));
-        } else if (status.isFinalized) {
+        } else if (status.isInBlock) {
           resolve('Success')
         }
       });

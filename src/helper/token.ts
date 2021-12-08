@@ -1,5 +1,5 @@
 import { connection, did, transaction, utils, token, vc } from 'mui-metablockchain-sdk';
-
+import * as _ from 'lodash';
 function checkTkAccEq(accountA, accountB) {
   let flag = true;
   // if (accountA.value.data.free !== accountB.value.data.free) {
@@ -17,7 +17,7 @@ function checkTkAccEq(accountA, accountB) {
   if (accountA.tokenData.token_name != accountB.tokenData.token_name) {
     flag = false;
   }
-  if(accountA.tokenIssuer != accountB.tokenIssuer) {
+  if (accountA.tokenIssuer != accountB.tokenIssuer) {
     flag = false;
   }
   return flag;
@@ -35,7 +35,7 @@ function checkTokenAccountsEqual(nodeATokenAccs, nodeBTokenAccs) {
       console.log('Not Equal', accountA, accountB);
       return;
     }
-    if(!checkTkAccEq(accountA, accountB)) {
+    if (!checkTkAccEq(accountA, accountB)) {
       flag = false;
       console.log('Not Equal', accountA, accountB);
     }
@@ -44,17 +44,20 @@ function checkTokenAccountsEqual(nodeATokenAccs, nodeBTokenAccs) {
 }
 
 async function getTokenAccounts(provider) {
-  return await Promise.all((await provider.query.tokens.accounts.entries())
+  let tokenAccounts = await Promise.all((await provider.query.tokens.accounts.entries())
     .map(async ([{ args: [did, currencyCode] }, value]) => {
       let tokenData = await token.getTokenData(currencyCode.toHuman(), provider);
       let tokenIssuer = await token.getTokenIssuer(currencyCode.toHuman(), provider);
-      return { 
-        did: did.toHuman(), 
-        value: value.toJSON(), 
+      return {
+        did: did.toHuman(),
+        value: value.toJSON(),
         tokenData,
         tokenIssuer,
       };
     }));
+  return _.uniqBy(tokenAccounts, function (ta) {
+    return ta.tokenData.currency_code;
+  });
 }
 
 async function getDetailedTokenBalance(did_hex, currencyId, tokenData, provider) {
@@ -76,7 +79,7 @@ async function issueToken(
         totalIssuanceAmt,
       ));
       nonce = nonce ?? await provider.rpc.system.accountNextIndex(senderAccountKeyPair.address);
-      let signedTx = tx.sign(senderAccountKeyPair, {nonce});
+      let signedTx = tx.sign(senderAccountKeyPair, { nonce });
       await signedTx.send(function ({ status, dispatchError, events }) {
         if (status.isInBlock || status.isFinalized) {
           events
@@ -85,7 +88,7 @@ async function issueToken(
             //   provider.events.sudo.Sudid.is(event)
             // )
             // We know that `Sudid` returns just a `Result`
-            .forEach(({ event : { data: [result] } }) => {
+            .forEach(({ event: { data: [result] } }) => {
               // Now we look to see if the extrinsic was actually successful or not...
               if (result.isError) {
                 let error = result.asError;
@@ -93,7 +96,7 @@ async function issueToken(
                   // for module errors, we have the section indexed, lookup
                   const decoded = provider.registry.findMetaError(error.asModule);
                   const { docs, name, section } = decoded;
-    
+
                   reject(new Error(`${section}.${name}`));
                 } else {
                   // Other, CannotLookup, BadOrigin, no extra info

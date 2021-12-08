@@ -2,7 +2,7 @@ import { ApiPromise, WsProvider } from "@polkadot/api";
 import { u8aToString } from "@polkadot/util";
 
 function sleep(ms){
-  new Promise((res, rej) => {
+  return new Promise((res, rej) => {
     setTimeout(res, ms);
   })
 }
@@ -142,6 +142,12 @@ const METABLOCKCHAIN_TYPES = {
       "V1_0_0",
       "V2_0_0",
       "V3_0_0"
+    ]
+  },
+  "VCPalletVersion": {
+    "_enum": [
+      "V1_0_0",
+      "V2_0_0"
     ]
   }
 }

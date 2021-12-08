@@ -8,10 +8,24 @@ async function setBalance(receiverAccountID, free, reserved, signingKeypair, pro
           provider.tx.balances.setBalance(receiverAccountID, free, reserved)
         );
 
-        await tx.signAndSend(signingKeypair, { nonce }, function ({ status, dispatchError }) {
+        await tx.signAndSend(signingKeypair, { nonce }, function ({ status, dispatchError, events }) {
+          events
+            .forEach(({ event : { data: [result] } }) => {
+              if (result.isError) {
+                let error = result.asError;
+                if (error.isModule) {
+                  const decoded = provider.registry.findMetaError(error.asModule);
+                  const { docs, name, section } = decoded;
+    
+                  reject(new Error(`${section}.${name}`));
+                } else {
+                  reject(new Error(error.toString()));
+                }
+              }
+            });
           if (dispatchError) {
             reject(new Error(dispatchError.toString()));
-          } else if (status.isInBlock) {
+          } else if (status.isReady) {
             resolve('Success');
           }
         });

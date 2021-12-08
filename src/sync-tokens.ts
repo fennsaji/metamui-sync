@@ -29,7 +29,6 @@ async function syncTokenData(tokenAccounts, sudoKeyPair, providerSyncFrom, provi
   let tokenIssuePromises = [];
   for (let i = 0; i < tokenAccounts.length; i++) {
     let { vcId, tokenData } = tokenAccounts[i];
-    console.log(tokenData.currency_code);
     if(!vcId) {
       continue;
     }
@@ -53,8 +52,6 @@ async function syncTokens(addedTokenVCs, providerSyncFrom, providerSyncTo, rootK
 
   // Get TokensData
   let tokenAccounts = (await getTokenAccounts(providerSyncFrom)).filter(ta => ta?.tokenData?.currency_code);
-  // tokenAccounts.filter(ta => )
-  console.log(tokenAccounts, addedTokenVCs);
 
   // merge token accounts and vcs
   tokenAccounts = tokenAccounts.map(ta => {
@@ -77,9 +74,7 @@ async function syncTokens(addedTokenVCs, providerSyncFrom, providerSyncTo, rootK
 
   console.log('Tokens Sync Completed');
 
-  // Check if data equalx
-  let newTokenAccounts = (await getTokenAccounts(providerSyncTo)).filter(ta => ta?.tokenData?.currency_code);
-  console.log('Token Account Equal:', checkTokenAccountsEqual(tokenAccounts, newTokenAccounts));
+  
 }
 
 export {

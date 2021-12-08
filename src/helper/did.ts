@@ -24,7 +24,7 @@ function storeDIDOnChain(DID, signingKeypair, api, nonce) {
       await tx.signAndSend(signingKeypair, { nonce }, function ({ status, dispatchError }) {
           if (dispatchError) {
           reject(new Error(dispatchError.toString()));
-        } else if (status.isReady) {
+        } else if (status.isInBlock) {
           resolve('Success');
         }
       });

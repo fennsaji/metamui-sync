@@ -1,5 +1,6 @@
 import { checkVCsEqual, getVCs, storeVC } from "./helper/vc";
 import { connection, did, transaction, utils, token, vc } from 'mui-metablockchain-sdk';
+import { sleep } from "./helper/utils";
 
 
 async function storeTokenVCs(vcs, rootKeyPair, provider, nonce) {
@@ -41,21 +42,18 @@ async function syncVcs(providerSyncFrom, providerSyncTo, rootKeyPair) {
   let nonce: any = +((await providerSyncTo.rpc.system.accountNextIndex(rootKeyPair.address)).toJSON());
 
   let addedVCs = await storeTokenVCs(vcs, rootKeyPair, providerSyncTo, nonce);
-  console.log(addedVCs);
 
   nonce = +((await providerSyncTo.rpc.system.accountNextIndex(rootKeyPair.address)).toJSON());
 
   storeOtherVCs(vcs, rootKeyPair, providerSyncTo, nonce);
 
   let newVcs = await getVCs(providerSyncTo);
-
-  // vcs = await getVCs(providerSyncFrom);
-
-  // console.log('VCS Equal', newVcs.length, vcs.length, checkVCsEqual(vcs, newVcs));
+  
   console.log('VCs sync completed');
 
   return addedVCs.map(vc => {
-    let currency_code = utils.decodeHex(vc.vc_property, vc.vc_type).currency_code;
+    const dec_data = utils.decodeHex(vc.vc_property, vc.vc_type);
+    let currency_code = dec_data.currency_code;
     let newVc = newVcs.find(newVc => {
       if(newVc.vc_type != 'TokenVC') {
         return false;
@@ -63,7 +61,10 @@ async function syncVcs(providerSyncFrom, providerSyncTo, rootKeyPair) {
       let ccy_code = utils.decodeHex(newVc.vc_property, newVc.vc_type).currency_code;
       return currency_code == ccy_code;
     });
-    return {...vc, newVcId: newVc.vcId, currency_code};
+    if(!newVc) {
+      return {...vc, currency_code};
+    }
+    return {...vc, newVcId: newVc.vcId, currency_code, vc_property: dec_data};
   });
 }
 
