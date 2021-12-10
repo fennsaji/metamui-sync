@@ -1,17 +1,15 @@
 import { connection, did, transaction, utils, token, vc } from 'mui-metablockchain-sdk';
-import { checkTokenAccountsEqual, getTokenAccounts, issueToken } from './helper/token';
+import { checkTokenAccountsEqual, getTokenAccounts, issueToken, setBalance } from './helper/token';
 import * as _ from 'lodash';
 
 async function getSupplyAndIssueToken(
   vcId,
-  currencyCode,
+  totalIssuance,
   sudoKeyPair,
   providerSyncTo,
-  providerSyncFrom,
   nonce
 ) {
   try {
-    let totalIssuance = await token.getTokenTotalSupply(currencyCode, providerSyncFrom);
     await issueToken(
       vcId,
       totalIssuance,
@@ -28,16 +26,15 @@ async function syncTokenData(tokenAccounts, sudoKeyPair, providerSyncFrom, provi
   let nonce: any = (await providerSyncTo.rpc.system.accountNextIndex(sudoKeyPair.address)).toJSON();
   let tokenIssuePromises = [];
   for (let i = 0; i < tokenAccounts.length; i++) {
-    let { vcId, tokenData } = tokenAccounts[i];
+    let { vcId, tokenData, totalIssuance } = tokenAccounts[i];
     if(!vcId) {
       continue;
     }
     tokenIssuePromises.push(getSupplyAndIssueToken(
       vcId,
-      tokenData.currency_code,
+      totalIssuance,
       sudoKeyPair,
       providerSyncTo,
-      providerSyncFrom,
       nonce
     ).catch(e => {
       console.log(vcId.toString(), tokenData.currency_code, e);
@@ -46,6 +43,33 @@ async function syncTokenData(tokenAccounts, sudoKeyPair, providerSyncFrom, provi
   }
   const data = await Promise.all(tokenIssuePromises.map(p => p.catch(e => e)));
   console.log(data.filter(d => !!d));
+}
+
+async function syncTokenUserBalances(tokenAccounts, sudoKeyPair, providerSyncTo) {
+  let nonce: any = (await providerSyncTo.rpc.system.accountNextIndex(sudoKeyPair.address)).toJSON();
+  let tokenIssuePromises = [];
+  for (let i = 0; i < tokenAccounts.length; i++) {
+    let { did, currencyCode, value, tokenIssuer, totalIssuance } = tokenAccounts[i];
+    let freeBalance = value?.data?.free;
+    if(!currencyCode || currencyCode == '' || did == tokenIssuer) {
+      continue;
+    }
+    if(freeBalance && freeBalance > totalIssuance) {
+      console.log('Total Issuance less', did, currencyCode, freeBalance, totalIssuance);
+    }
+    tokenIssuePromises.push(setBalance(
+      did,
+      currencyCode,
+      freeBalance,
+      sudoKeyPair,
+      providerSyncTo,
+      nonce
+    ).catch(e => {
+      console.log(did, currencyCode, freeBalance, e);
+    }));
+    nonce = +nonce + 1;
+  }
+  await Promise.all(tokenIssuePromises.map(p => p.catch(e => e)));
 }
 
 async function syncTokens(addedTokenVCs, providerSyncFrom, providerSyncTo, rootKeyPair) {
@@ -58,19 +82,21 @@ async function syncTokens(addedTokenVCs, providerSyncFrom, providerSyncTo, rootK
     let vc = addedTokenVCs.find(vc => {
       let dec_cc = utils.hexToString(vc.currency_code);
       return ta.tokenData.currency_code == dec_cc;
-    })
+    });
     if (!vc) {
       return { ...ta };
     }
     return { ...ta, vcId: vc.newVcId, vcData: vc };
   })
 
-  tokenAccounts = _.uniqBy(tokenAccounts, function (ta) {
+  let issuedTokens = _.uniqBy(tokenAccounts, function (ta) {
     return ta.tokenData.currency_code;
   });
 
   // Sync data
-  await syncTokenData(tokenAccounts, rootKeyPair, providerSyncFrom, providerSyncTo);
+  await syncTokenData(issuedTokens, rootKeyPair, providerSyncFrom, providerSyncTo);
+
+  await syncTokenUserBalances(tokenAccounts, rootKeyPair, providerSyncTo);
 
   console.log('Tokens Sync Completed');
 

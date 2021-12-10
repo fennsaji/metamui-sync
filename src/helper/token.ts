@@ -2,9 +2,9 @@ import { connection, did, transaction, utils, token, vc } from 'mui-metablockcha
 import * as _ from 'lodash';
 function checkTkAccEq(accountA, accountB) {
   let flag = true;
-  // if (accountA.value.data.free !== accountB.value.data.free) {
-  //   flag = false;
-  // }
+  if (accountA.value.data.free !== accountB.value.data.free) {
+    flag = false;
+  }
   if (accountA.value.data.reserved !== accountB.value.data.reserved) {
     flag = false;
   }
@@ -29,10 +29,10 @@ function checkTokenAccountsEqual(nodeATokenAccs, nodeBTokenAccs) {
   // }
   let flag = true;
   nodeATokenAccs.forEach(accountA => {
-    let accountB: any = nodeBTokenAccs.find((t: any) => t.tokenData.currency_code == accountA.tokenData.currency_code);
+    let accountB: any = nodeBTokenAccs.find((t: any) => (t.did == accountA.did && t.currencyCode == accountA.currencyCode));
     if (!accountB) {
       flag = false;
-      console.log('Not Equal', accountA, accountB);
+      console.log('Undefined B', accountA, accountB);
       return;
     }
     if (!checkTkAccEq(accountA, accountB)) {
@@ -43,21 +43,36 @@ function checkTokenAccountsEqual(nodeATokenAccs, nodeBTokenAccs) {
   return flag;
 }
 
+async function getTokenTotalSupply(currencyCode, provider) {
+  const data = await provider.query.tokens.totalIssuance(token.sanitiseCCode(currencyCode));
+  return data.toJSON();
+}
+
 async function getTokenAccounts(provider) {
-  let tokenAccounts = await Promise.all((await provider.query.tokens.accounts.entries())
+  return await Promise.all((await provider.query.tokens.accounts.entries())
     .map(async ([{ args: [did, currencyCode] }, value]) => {
+      if(!currencyCode.toHuman()) {
+        return {
+          did: utils.hexToString(did.toHuman()),
+          currencyCode: utils.hexToString(currencyCode.toString()),
+          value: value.toJSON(),
+        };
+      }
       let tokenData = await token.getTokenData(currencyCode.toHuman(), provider);
       let tokenIssuer = await token.getTokenIssuer(currencyCode.toHuman(), provider);
+      let totalIssuance;
+      try {
+        totalIssuance = await getTokenTotalSupply(currencyCode.toHuman(), provider);
+      } catch(err) {}
       return {
-        did: did.toHuman(),
+        did: utils.hexToString(did.toHuman()),
+        currencyCode: utils.hexToString(currencyCode.toString()),
         value: value.toJSON(),
         tokenData,
-        tokenIssuer,
+        tokenIssuer: utils.hexToString(tokenIssuer),
+        totalIssuance,
       };
     }));
-  return _.uniqBy(tokenAccounts, function (ta) {
-    return ta.tokenData.currency_code;
-  });
 }
 
 async function getDetailedTokenBalance(did_hex, currencyId, tokenData, provider) {
@@ -110,9 +125,56 @@ async function issueToken(
   });
 }
 
+async function setBalance(
+  dest,
+  currencyCode,
+  amount,
+  senderAccountKeyPair,
+  api = false,
+  nonce,
+) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const provider = api || (await connection.buildConnection('local'));
+      const tx = provider.tx.sudo.sudo(provider.tx.tokens.setBalance(
+        did.sanitiseDid(dest),
+        token.sanitiseCCode(currencyCode),
+        amount,
+      ));
+      nonce = nonce ?? await provider.rpc.system.accountNextIndex(senderAccountKeyPair.address);
+      let signedTx = tx.sign(senderAccountKeyPair, { nonce });
+      await signedTx.send(function ({ status, dispatchError, events }) {
+          events
+            .forEach(({ event: { data: [result] } }) => {
+              if (result.isError) {
+                let error = result.asError;
+                if (error.isModule) {
+                  const decoded = provider.registry.findMetaError(error.asModule);
+                  const { docs, name, section } = decoded;
+
+                  reject(new Error(`${section}.${name}`));
+                } else {
+                  reject(new Error(error.toString()));
+                }
+              }
+            });
+        if (dispatchError) {
+          reject(new Error(dispatchError.toString()));
+        } else if (status.isInBlock) {
+          resolve(signedTx.hash.toHex())
+        }
+      });
+    } catch (err) {
+      // console.log(err);
+      reject(err);
+    }
+  });
+}
+
 export {
   checkTokenAccountsEqual,
   getTokenAccounts,
   getDetailedTokenBalance,
   issueToken,
+  setBalance,
 }

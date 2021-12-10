@@ -10,29 +10,19 @@ async function storeVC(vcHex, sudoKeyPair, provider, nonce) {
       await tx.signAndSend(sudoKeyPair, {nonce}, function ({ status, dispatchError, events }) {
         if (status.isInBlock || status.isFinalized) {
           events
-            // We know this tx should result in `Sudid` event.
-            // .filter(({ event }) =>
-            //   provider.events.sudo.Sudid.is(event)
-            // )
-            // We know that `Sudid` returns just a `Result`
             .forEach(({ event : { data: [result] } }) => {
-              // Now we look to see if the extrinsic was actually successful or not...
               if (result.isError) {
                 let error = result.asError;
                 if (error.isModule) {
-                  // for module errors, we have the section indexed, lookup
                   const decoded = provider.registry.findMetaError(error.asModule);
                   const { docs, name, section } = decoded;
-    
-                  console.log(`${section}.${name}`);
+                  reject(`${section}.${name}`);
                 } else {
-                  // Other, CannotLookup, BadOrigin, no extra info
-                  console.log(error.toString());
+                  reject(error.toString());
                 }
               }
             });
         }
-
         if (dispatchError) {
           reject(new Error(dispatchError.toString()));
         } else if (status.isInBlock) {
@@ -74,9 +64,9 @@ function checkVCEq(vcA, vcB) {
 }
 
 function checkVCsEqual(nodeAVCs, nodeBVCs) {
-  if (nodeAVCs.length != nodeBVCs.length) {
-    return false;
-  }
+  // if (nodeAVCs.length != nodeBVCs.length) {
+  //   return false;
+  // }
   if(!nodeAVCs || nodeAVCs.length == 0) {
     return false;
   }

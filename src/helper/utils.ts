@@ -14,9 +14,9 @@ function didEqual(didA, didB) {
   if (didA.accountId !== didB.accountId) {
     return false;
   }
-  if (didA.metadata !== didB.metadata) {
-    return false;
-  }
+  // if (didA.metadata !== didB.metadata) {
+  //   return false;
+  // }
   if (didA.value.data.free !== didB.value.data.free) {
     return false;
   }
@@ -31,11 +31,11 @@ function checkDidsEqual(didsA, didsB) {
     try {
       let didA: any = didsB.find((d: any) => d.did == didB.did);
       if (!didA || !didA.value) {
-        console.log('Data Incomplete A', didA);
+        console.log('Data Incomplete A', didB);
         return {didA, didB};
       }
       if (!didB || !didB.value) {
-        console.log('Data Incomplete B', didB);
+        console.log('Data Incomplete B', didA);
         return {didA, didB};
       }
       let isEqual = didEqual(didB, didA);

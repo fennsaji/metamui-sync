@@ -59,7 +59,7 @@ async function main() {
   let updatedValidators = await getValidators(providerSyncTo);
   console.log('Validators Equal:', checkValidatorsEqual(validators, updatedValidators));
 
-  // Check if vcs are equal
+  // Checzk if vcs are equal
   let newVcs = await getVCs(providerSyncTo);
   let vcs = await getVCs(providerSyncFrom);
   console.log('VCS Equal:', checkVCsEqual(vcs, newVcs));
@@ -68,7 +68,7 @@ async function main() {
   let tokenAccounts = (await getTokenAccounts(providerSyncFrom)).filter(ta => ta?.tokenData?.currency_code);
   let newTokenAccounts = (await getTokenAccounts(providerSyncTo)).filter(ta => ta?.tokenData?.currency_code);
   console.log('Token Account Equal:', checkTokenAccountsEqual(tokenAccounts, newTokenAccounts));
-  
+
   console.log('Finished Sync');
 }
 

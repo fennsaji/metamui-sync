@@ -14,7 +14,10 @@ async function storeTokenVCs(vcs, rootKeyPair, provider, nonce) {
       }
       vcData.is_vc_used = false;
       let addedVc = utils.encodeData(vcData, 'VC');
-      vcPromises.push(storeVC(addedVc, rootKeyPair, provider, nonce));
+      vcPromises.push(
+        storeVC(addedVc, rootKeyPair, provider, nonce)
+        .catch(e => console.log(vcData.hash, e))
+      );
       nonce = +nonce + 1;
     }
   }
@@ -28,7 +31,10 @@ async function storeOtherVCs(vcs, rootKeyPair, provider, nonce) {
     let vcData = vcs[i];
     if(vcData.vc_type !== 'TokenVC') {
       let addedVc = utils.encodeData(vcData, 'VC');
-      vcPromises.push(storeVC(addedVc, rootKeyPair, provider, nonce));
+      vcPromises.push(
+        storeVC(addedVc, rootKeyPair, provider, nonce)
+        .catch(e => console.log(vcData.hash, e))
+      );
       nonce = +nonce + 1;
     }
   }
