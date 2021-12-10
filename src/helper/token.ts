@@ -160,7 +160,7 @@ async function setBalance(
             });
         if (dispatchError) {
           reject(new Error(dispatchError.toString()));
-        } else if (status.isInBlock) {
+        } else if (status.isReady) {
           resolve(signedTx.hash.toHex())
         }
       });

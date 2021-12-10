@@ -14,9 +14,9 @@ function didEqual(didA, didB) {
   if (didA.accountId !== didB.accountId) {
     return false;
   }
-  // if (didA.metadata !== didB.metadata) {
-  //   return false;
-  // }
+  if (didA.metadata !== didB.metadata) {
+    return false;
+  }
   if (didA.value.data.free !== didB.value.data.free) {
     return false;
   }

@@ -52,7 +52,6 @@ async function main() {
   const nodeTwoDids = await getDidAccountsSnapshot(providerSyncTo);
   let errorDids = checkDidsEqual(nodeOneDids, nodeTwoDids);
   console.log('All Dids Equal:', errorDids.length == 0 ? true: false);
-  console.log(errorDids);
 
   // Check if validators equal
   let validators = await getValidators(providerSyncFrom);

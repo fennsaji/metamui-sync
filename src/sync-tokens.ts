@@ -41,8 +41,7 @@ async function syncTokenData(tokenAccounts, sudoKeyPair, providerSyncFrom, provi
     }));
     nonce = +nonce + 1;
   }
-  const data = await Promise.all(tokenIssuePromises.map(p => p.catch(e => e)));
-  console.log(data.filter(d => !!d));
+  await Promise.all(tokenIssuePromises.map(p => p.catch(e => e)));
 }
 
 async function syncTokenUserBalances(tokenAccounts, sudoKeyPair, providerSyncTo) {

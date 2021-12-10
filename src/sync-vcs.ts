@@ -16,7 +16,7 @@ async function storeTokenVCs(vcs, rootKeyPair, provider, nonce) {
       let addedVc = utils.encodeData(vcData, 'VC');
       vcPromises.push(
         storeVC(addedVc, rootKeyPair, provider, nonce)
-        .catch(e => console.log(vcData.hash, e))
+        .catch(e => console.log('VC Store Error', {hash: vcData.hash, e}))
       );
       nonce = +nonce + 1;
     }
@@ -33,7 +33,7 @@ async function storeOtherVCs(vcs, rootKeyPair, provider, nonce) {
       let addedVc = utils.encodeData(vcData, 'VC');
       vcPromises.push(
         storeVC(addedVc, rootKeyPair, provider, nonce)
-        .catch(e => console.log(vcData.hash, e))
+        .catch(e => console.log('VC Store Error', {hash: vcData.hash, e}))
       );
       nonce = +nonce + 1;
     }
