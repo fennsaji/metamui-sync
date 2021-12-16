@@ -54,7 +54,7 @@ function checkDidsEqual(didsA, didsB) {
 const bytesToString = (inputBytes) => u8aToString(inputBytes).replace(/^\0+/, '').replace(/\0+$/, '');
 
 const METABLOCKCHAIN_TYPES = {
-  "PeerId": "(Vec<>)",
+  "PeerId": "OpaquePeerId",
   "identifier": "[u8;32]",
   "public_key": "[u8;32]",
   "metadata": "Vec<u8>",
@@ -149,7 +149,8 @@ const METABLOCKCHAIN_TYPES = {
       "V1_0_0",
       "V2_0_0"
     ]
-  }
+  },
+  "PeerIdBType": "BTreeSet<PeerId>"
 }
 
 

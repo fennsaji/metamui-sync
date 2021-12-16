@@ -85,7 +85,7 @@ async function syncDidAccounts(latestAccounts, providerSyncTo, rootKeyPair, nonc
   }
 }
 
-async function syncDidAccountsBalance(latestAccounts, providerSyncTo, rootKeyPair, nonce) {
+async function syncDidAccountsBalance(latestAccounts, providerSyncTo, rootKeyPair, nonce, fullFreeAmount) {
   try {
     let setBalanceErrorObjects = [];
 
@@ -97,8 +97,16 @@ async function syncDidAccountsBalance(latestAccounts, providerSyncTo, rootKeyPai
     let setBalPromises = [];
     for (let i = 0; i < didsWithAccId.length; i++) {
       let acc = didsWithAccId[i];
+      let free, reserved;
+      if(fullFreeAmount) {
+        free = +acc.value.data.free + +acc.value.data.reserved;
+        reserved = 0;
+      } else {
+        free = acc.value.data.free;
+        reserved = acc.value.data.reserved;
+      }
       setBalPromises.push(
-        setBalance(acc.accountId, acc.value.data.free, acc.value.data.reserved, rootKeyPair, providerSyncTo, nonce)
+        setBalance(acc.accountId, free, reserved, rootKeyPair, providerSyncTo, nonce)
           .catch(err => {
             setBalanceErrorObjects.push({ error: err, account: acc });
             console.log('Sync Acc Balance Error:', acc, err);
@@ -127,10 +135,10 @@ async function syncDids(providerSyncFrom, providerSyncTo, rootKeyPair, nonce) {
   return nonce;
 }
 
-async function syncDidsBalance(providerSyncFrom, providerSyncTo, rootKeyPair, nonce) {
+async function syncDidsBalance(providerSyncFrom, providerSyncTo, rootKeyPair, nonce, fullFreeAmount) {
   nonce = (await providerSyncTo.rpc.system.accountNextIndex(rootKeyPair.address)).toJSON();
   const nodeOneDids = await getDidAccountsSnapshot(providerSyncFrom);
-  await syncDidAccountsBalance(nodeOneDids, providerSyncTo, rootKeyPair, nonce);
+  await syncDidAccountsBalance(nodeOneDids, providerSyncTo, rootKeyPair, nonce, fullFreeAmount);
   nonce+=nodeOneDids.length;
   console.log('Did Balance Sync Completed');
   return nonce;
