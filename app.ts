@@ -1,10 +1,12 @@
 import { Keyring } from "@polkadot/api";
 import { cryptoWaitReady } from "@polkadot/util-crypto";
+import { checkIfMembersPrimeEqual, checkIfProposalsEqual, getCouncilData } from "./src/helper/council";
 import { checkNodeAuthsEqual, getAdditionalConnections, getNodeData, getWellKnownNodes } from "./src/helper/node-auth";
 import { checkTokenAccountsEqual, getTokenAccounts } from "./src/helper/token";
 import { checkDidsEqual, createConnection, sleep } from "./src/helper/utils";
 import { checkValidatorsEqual, getValidators } from "./src/helper/validators";
 import { checkVCsEqual, getVCs } from "./src/helper/vc";
+import { syncCouncil } from "./src/sync-council";
 import { getDidAccountsSnapshot, syncDids, syncDidsBalance } from "./src/sync-dids";
 import { syncNodeAuths } from "./src/sync-node-auth";
 import { syncTokens } from "./src/sync-tokens";
@@ -31,21 +33,25 @@ async function main() {
   let nonce: any = (await providerSyncTo.rpc.system.accountNextIndex(rootKeyPair.address)).toJSON();
 
   // Sync Did from one node to another
-  await syncDids(providerSyncFrom, providerSyncTo, rootKeyPair, nonce);
-  await syncDidsBalance(providerSyncFrom, providerSyncTo, rootKeyPair, nonce, true);
+  await syncDids(providerSyncFrom, providerSyncTo, rootKeyPair, nonce); // Block
+  await syncDidsBalance(providerSyncFrom, providerSyncTo, rootKeyPair, nonce, true); // Ready
 
   // Sync validators
-  await syncValidators(providerSyncFrom, providerSyncTo, rootKeyPair, nonce);
+  await syncValidators(providerSyncFrom, providerSyncTo, rootKeyPair, nonce); // Ready
 
-  await syncNodeAuths(providerSyncFrom, providerSyncTo, rootKeyPair);
+  await syncNodeAuths(providerSyncFrom, providerSyncTo, rootKeyPair); // Ready
 
   // Sync VC Pallet
-  let addedVCs = await syncVcs(providerSyncFrom, providerSyncTo, rootKeyPair);
+  let addedVCs = await syncVcs(providerSyncFrom, providerSyncTo, rootKeyPair); // Block
 
   // Sync Tokens
-  await syncTokens(addedVCs, providerSyncFrom, providerSyncTo, rootKeyPair);
+  await syncTokens(addedVCs, providerSyncFrom, providerSyncTo, rootKeyPair); // Ready
+
+
+  // Sync Council
+  await syncCouncil(providerSyncFrom, providerSyncTo, rootKeyPair);
   
-  nonce = await syncDidsBalance(providerSyncFrom, providerSyncTo, rootKeyPair, nonce, false);
+  nonce = await syncDidsBalance(providerSyncFrom, providerSyncTo, rootKeyPair, nonce, false); // Ready
 
   await sleep(5000);
 
@@ -73,9 +79,16 @@ async function main() {
   console.log('Token Account Equal:', checkTokenAccountsEqual(tokenAccounts, newTokenAccounts));
 
 
+  // Check if node auth data are equal
   let nodeData = await getNodeData(providerSyncFrom);
   let newNodeData = await getNodeData(providerSyncTo);
   console.log('Node Auth Equal:', checkNodeAuthsEqual(nodeData, newNodeData));
+
+  // Check if council data are equal
+  let {prime, members, proposals} = await getCouncilData(providerSyncFrom);
+  let {prime: newPrime, members: newMembers, proposals: newProposals} = await getCouncilData(providerSyncTo);
+  console.log('Council Members Equal:', checkIfMembersPrimeEqual({prime, members}, {newPrime, newMembers}));
+  console.log('Council Proposals Equal:', checkIfProposalsEqual(proposals, newProposals));
 
   console.log('Finished Sync');
 }
