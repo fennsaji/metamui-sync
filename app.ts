@@ -34,6 +34,7 @@ async function main() {
 
   // Sync Did from one node to another
   await syncDids(providerSyncFrom, providerSyncTo, rootKeyPair, nonce); // Block
+  // Synced without taking into account reserved amount
   await syncDidsBalance(providerSyncFrom, providerSyncTo, rootKeyPair, nonce, true); // Ready
 
   // Sync validators
@@ -53,6 +54,7 @@ async function main() {
   // And swn will be owner of proposal with his vote as yes
   await syncCouncil(providerSyncFrom, providerSyncTo, rootKeyPair);
   
+  // Need to sync again for correcting reserved amount done in token issuance
   nonce = await syncDidsBalance(providerSyncFrom, providerSyncTo, rootKeyPair, nonce, false); // Ready
 
   await sleep(5000);
