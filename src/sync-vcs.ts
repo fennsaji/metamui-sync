@@ -13,10 +13,12 @@ async function storeTokenVCs(vcs, rootKeyPair, provider, nonce) {
         addedVCs.push(vcData);
       }
       vcData.is_vc_used = false;
+      const dec_data = utils.decodeHex(vcData.vc_property, vcData.vc_type);
+      let dec_cc = utils.hexToString(dec_data.currency_code);
       let addedVc = utils.encodeData(vcData, 'VC');
       vcPromises.push(
         storeVC(addedVc, rootKeyPair, provider, nonce)
-        .catch(e => console.log('VC Store Error', {hash: vcData.hash, e}))
+        .catch(e => console.log('VC Store Error', {ccode: dec_cc, hash: vcData.hash, e}))
       );
       nonce = +nonce + 1;
     }

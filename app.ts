@@ -49,6 +49,8 @@ async function main() {
 
 
   // Sync Council
+  // NOTE: did:ssid:swn is added as council if it's not there, it's for creating proposals
+  // And swn will be owner of proposal with his vote as yes
   await syncCouncil(providerSyncFrom, providerSyncTo, rootKeyPair);
   
   nonce = await syncDidsBalance(providerSyncFrom, providerSyncTo, rootKeyPair, nonce, false); // Ready
@@ -61,34 +63,34 @@ async function main() {
   const nodeOneDids = await getDidAccountsSnapshot(providerSyncFrom);
   const nodeTwoDids = await getDidAccountsSnapshot(providerSyncTo);
   let errorDids = checkDidsEqual(nodeOneDids, nodeTwoDids);
-  console.log('All Dids Equal:', errorDids.length == 0 ? true: false);
+  console.log('All Dids Equal-', nodeOneDids.length, '&', nodeTwoDids.length, ':', errorDids.length == 0 ? true: false);
 
   // Check if validators equal
   let validators = await getValidators(providerSyncFrom);
   let updatedValidators = await getValidators(providerSyncTo);
-  console.log('Validators Equal:', checkValidatorsEqual(validators, updatedValidators));
+  console.log('Validators Equal-', validators.length, '&', updatedValidators.length, ':', checkValidatorsEqual(validators, updatedValidators));
 
   // Checzk if vcs are equal
-  let newVcs = await getVCs(providerSyncTo);
   let vcs = await getVCs(providerSyncFrom);
-  console.log('VCS Equal:', checkVCsEqual(vcs, newVcs));
+  let newVcs = await getVCs(providerSyncTo);
+  console.log('VCS Equal-', vcs.length, '&', newVcs.length, ':' , checkVCsEqual(vcs, newVcs));
 
   // Check if tokens are equal
   let tokenAccounts = (await getTokenAccounts(providerSyncFrom)).filter(ta => ta?.tokenData?.currency_code);
   let newTokenAccounts = (await getTokenAccounts(providerSyncTo)).filter(ta => ta?.tokenData?.currency_code);
-  console.log('Token Account Equal:', checkTokenAccountsEqual(tokenAccounts, newTokenAccounts));
+  console.log('Token Account Equal:', tokenAccounts.length, '&', newTokenAccounts.length, ':' , checkTokenAccountsEqual(tokenAccounts, newTokenAccounts));
 
 
   // Check if node auth data are equal
   let nodeData = await getNodeData(providerSyncFrom);
   let newNodeData = await getNodeData(providerSyncTo);
-  console.log('Node Auth Equal:', checkNodeAuthsEqual(nodeData, newNodeData));
+  console.log('Node Auth Equal:', nodeData.length, '&', newNodeData.length, ':', checkNodeAuthsEqual(nodeData, newNodeData));
 
   // Check if council data are equal
   let {prime, members, proposals} = await getCouncilData(providerSyncFrom);
   let {prime: newPrime, members: newMembers, proposals: newProposals} = await getCouncilData(providerSyncTo);
-  console.log('Council Members Equal:', checkIfMembersPrimeEqual({prime, members}, {newPrime, newMembers}));
-  console.log('Council Proposals Equal:', checkIfProposalsEqual(proposals, newProposals));
+  console.log('Council Members Equal:', members.length, '&', newMembers.length, ':' , checkIfMembersPrimeEqual({prime, members}, {newPrime, newMembers}));
+  console.log('Council Proposals Equal:', proposals.length, '&', newProposals.length, ':' , checkIfProposalsEqual(proposals, newProposals));
 
   console.log('Finished Sync');
 }

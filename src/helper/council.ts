@@ -24,7 +24,7 @@ async function setMembers(newMembers, prime, oldCount, signingKeypair, api = fal
             // console.log(dispatchError.toString());
             reject(new Error(dispatchError.toString()));
           }
-        } else if (status.isReady) {
+        } else if (status.isInBlock) {
           // console.log('Finalized block hash', status.asFinalized.toHex());
           // console.log('Transaction send to provider', status.asFinalized.toHex());
           resolve(signedTx.hash.toHex());
@@ -43,7 +43,8 @@ async function propose(threshold, proposal, lengthCount, signingKeypair, api = f
   return new Promise(async (resolve, reject) => {
     try {
       const provider = api || await connection.buildConnection('local');
-      const tx = provider.tx.council.propose(threshold, proposal, lengthCount);
+      let call = provider.tx[proposal['section']][proposal['method']](...proposal.args);
+      const tx = provider.tx.council.propose(threshold, call, lengthCount);
       nonce = nonce ?? await provider.rpc.system.accountNextIndex(signingKeypair.address);
       let signedTx = tx.sign(signingKeypair, {nonce});
       await signedTx.send(function ({ status, dispatchError }) {
