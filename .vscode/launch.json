@@ -15,8 +15,8 @@
       {
         "type": "node",
         "request": "launch",
-        "name": "Run Test",
-        "program": "${workspaceFolder}/test.ts",
+        "name": "Run Validator",
+        "program": "${workspaceFolder}/validator.ts",
         "preLaunchTask": "tsc: build - tsconfig.json",
         "outFiles": ["${workspaceFolder}/bin/**/*.js"]
       },

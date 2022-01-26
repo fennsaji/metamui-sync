@@ -80,19 +80,19 @@ async function main() {
   // Check if tokens are equal
   let tokenAccounts = (await getTokenAccounts(providerSyncFrom)).filter(ta => ta?.tokenData?.currency_code);
   let newTokenAccounts = (await getTokenAccounts(providerSyncTo)).filter(ta => ta?.tokenData?.currency_code);
-  console.log('Token Account Equal:', tokenAccounts.length, '&', newTokenAccounts.length, ':' , checkTokenAccountsEqual(tokenAccounts, newTokenAccounts));
+  console.log('Token Account Equal-', tokenAccounts.length, '&', newTokenAccounts.length, ':' , checkTokenAccountsEqual(tokenAccounts, newTokenAccounts));
 
 
   // Check if node auth data are equal
   let nodeData = await getNodeData(providerSyncFrom);
   let newNodeData = await getNodeData(providerSyncTo);
-  console.log('Node Auth Equal:', nodeData.length, '&', newNodeData.length, ':', checkNodeAuthsEqual(nodeData, newNodeData));
+  console.log('Node Auth Equal-', nodeData.length, '&', newNodeData.length, ':', checkNodeAuthsEqual(nodeData, newNodeData));
 
   // Check if council data are equal
   let {prime, members, proposals} = await getCouncilData(providerSyncFrom);
   let {prime: newPrime, members: newMembers, proposals: newProposals} = await getCouncilData(providerSyncTo);
-  console.log('Council Members Equal:', members.length, '&', newMembers.length, ':' , checkIfMembersPrimeEqual({prime, members}, {newPrime, newMembers}));
-  console.log('Council Proposals Equal:', proposals.length, '&', newProposals.length, ':' , checkIfProposalsEqual(proposals, newProposals));
+  console.log('Council Members Equal-', members.length, '&', newMembers.length, ':' , checkIfMembersPrimeEqual({prime, members}, {newPrime, newMembers}));
+  console.log('Council Proposals Equal-', proposals.length, '&', newProposals.length, ':' , checkIfProposalsEqual(proposals, newProposals));
 
   console.log('Finished Sync');
 }

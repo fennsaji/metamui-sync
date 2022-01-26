@@ -21,18 +21,17 @@ async function addWellKnownNode(
   owner,
   senderAccountKeyPair,
   api = false,
-  nonce,
+  nonce=-1,
 ) {
   return new Promise(async (resolve, reject) => {
     try {
       const provider = api || (await connection.buildConnection('local'));
       const tx = provider.tx.sudo.sudo(provider.tx.nodeAuthorization.addWellKnownNode(
         peerId,
-        owner,
+        did.sanitiseDid(owner),
       ));
       nonce = nonce ?? await provider.rpc.system.accountNextIndex(senderAccountKeyPair.address);
-      let signedTx = tx.sign(senderAccountKeyPair, { nonce });
-      await signedTx.send(function ({ status, dispatchError, events }) {
+      await tx.signAndSend(senderAccountKeyPair, { nonce }, function ({ status, dispatchError, events }) {
           events
             .forEach(({ event: { data: [result] } }) => {
               if (result.isError) {
@@ -48,8 +47,8 @@ async function addWellKnownNode(
             });
         if (dispatchError) {
           reject(new Error(dispatchError.toString()));
-        } else if (status.isReady) {
-          resolve(signedTx.hash.toHex())
+        } else if (status.isFinalized) {
+          resolve(true);
         }
       });
     } catch (err) {

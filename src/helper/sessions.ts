@@ -1,28 +1,16 @@
-
 import { connection, did, transaction, utils } from 'mui-metablockchain-sdk';
 
-function storeDIDOnChain(DID, signingKeypair, api, nonce) {
+async function addSessionKeys(keys, senderAccountKeyPair, api=false, nonce=-1) {
   return new Promise(async (resolve, reject) => {
     try {
       const provider = api || (await connection.buildConnection('local'));
-
-      const tx = provider.tx.did.add(DID.public_key, did.sanitiseDid(DID.identity), DID.metadata);
-      // const txs = [
-      //   provider.tx.did.add(DID.public_key, did.sanitiseDid(DID.identity), DID.metadata),
-      // ];
-
-      // provider.tx.utility
-      // .batch(txs)
-      // .signAndSend(signingKeypair, ({ status, dispatchError }) => {
-      //   if (dispatchError) {
-      //     reject(new Error(dispatchError.toString()));
-      //   } else if (status.isInBlock) {
-      //     resolve('Success');
-      //   }
-      // });
-
-      await tx.signAndSend(signingKeypair, { nonce }, function ({ status, dispatchError, events }) {
-        events
+      const tx = provider.tx.session.setKeys(
+        keys,
+        ''
+      );
+      nonce = nonce ?? await provider.rpc.system.accountNextIndex(senderAccountKeyPair.address);
+      await tx.signAndSend(senderAccountKeyPair, { nonce }, function ({ status, dispatchError, events }) {
+          events
             .forEach(({ event: { data: [result] } }) => {
               if (result.isError) {
                 let error = result.asError;
@@ -34,20 +22,19 @@ function storeDIDOnChain(DID, signingKeypair, api, nonce) {
                   reject(new Error(error.toString()));
                 }
               }
-            });  
+            });
         if (dispatchError) {
           reject(new Error(dispatchError.toString()));
         } else if (status.isInBlock) {
-          resolve('Success');
+          resolve(true);
         }
       });
     } catch (err) {
-      reject(new Error(err));
+      reject(err);
     }
   });
 }
 
-
 export {
-  storeDIDOnChain,
+  addSessionKeys,
 }
