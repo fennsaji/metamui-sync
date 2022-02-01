@@ -3,7 +3,7 @@ import { storeDIDOnChain } from './src/helper/did';
 import { addWellKnownNode } from './src/helper/node-auth';
 import { addNodeValidator } from './src/helper/node-validator';
 import { addSessionKeys } from './src/helper/sessions';
-import { createConnection } from './src/helper/utils';
+import { createConnection, sleep } from './src/helper/utils';
 
 async function addKey(node, {suri, aura, gran}) {
   await node.rpc.author.insertKey('aura', suri, aura.key);
@@ -86,10 +86,7 @@ async function addNodeFiveKeys() {
   await addKey(nodeFive, nodeFiveKeys);
 }
 
-async function addValidator(provider, newNodeUrl, seedPhrase, rootKeyPair, didIdentity, nodeKey, publicKey) {
-  const nodeProvider: any = await createConnection(newNodeUrl);
-  const keyring = new Keyring({ type: 'sr25519' });
-  const nodeKeyPair = await keyring.addFromUri(seedPhrase);
+async function addPeer(provider, rootKeyPair, didIdentity, nodeKey, publicKey) {
   let didObj = {
     public_key: publicKey,
     identity: didIdentity,
@@ -105,24 +102,25 @@ async function addValidator(provider, newNodeUrl, seedPhrase, rootKeyPair, didId
   } catch(e) {
     console.log(e);
   }
+}
+
+async function addValidator(newNodeUrl, seedPhrase, rootKeyPair) {
+  const nodeProvider: any = await createConnection(newNodeUrl);
+  const keyring = new Keyring({ type: 'sr25519' });
+  const nodeKeyPair = await keyring.addFromUri(seedPhrase);
   let rotatedKeys = await nodeProvider.rpc.author.rotateKeys();
   try {
     await addSessionKeys(rotatedKeys, nodeKeyPair, nodeProvider);
-    await addNodeValidator(publicKey, rootKeyPair, nodeProvider);
+    await addNodeValidator(nodeKeyPair.publicKey, rootKeyPair, nodeProvider);
   } catch(e) {
     console.log(e);
   }
 }
 
-async function addValidatorOne(provider, rootKeyPair) {
+async function addValidatorOne(rootKeyPair) {
   let nodeOneUrl = 'ws://127.0.0.1:9944';
   let nodeOneSeed = '//Alice';
-  const nodeProvider: any = await createConnection(nodeOneUrl);
-  const keyring = new Keyring({ type: 'sr25519' });
-  const nodeKeyPair = await keyring.addFromUri(nodeOneSeed);
-  let rotatedKeys = await nodeProvider.rpc.author.rotateKeys();
-  await addSessionKeys(rotatedKeys, nodeKeyPair, nodeProvider);
-  await addNodeValidator(nodeKeyPair.publicKey, rootKeyPair, nodeProvider);
+  await addValidator(nodeOneUrl, nodeOneSeed, rootKeyPair);
 }
 
 async function addValidatorTwo(provider, rootKeyPair) {
@@ -135,7 +133,8 @@ async function addValidatorTwo(provider, rootKeyPair) {
     peerId: '12D3KooWQYV9dGMFoRzNStwpXztXaBUjtPqi6aU76ZgUriHhKust',
     decodedPeerId: '0x002408011220dacde7714d8551f674b8bb4b54239383c76a2b286fa436e93b2b7eb226bf4de7'
   }
-  await addValidator(provider, nodeTwoUrl, nodeTwoSeed, rootKeyPair, nodeTwoDid, nodeTwoNodeKeys, nodeTwoPkey);
+  await addPeer(provider, rootKeyPair, nodeTwoDid, nodeTwoNodeKeys, nodeTwoPkey);
+  await addValidator(nodeTwoUrl, nodeTwoSeed, rootKeyPair);
 }
 
 async function addValidatorThree(provider, rootKeyPair) {
@@ -149,7 +148,8 @@ async function addValidatorThree(provider, rootKeyPair) {
     decodedPeerId: '0x002408011220876a7b4984f98006dc8d666e28b60de307309835d775e7755cc770328cdacf2e'
   }
   try {
-    await addValidator(provider, nodeThreeUrl, nodeThreeSeed, rootKeyPair, nodeThreeDid, nodeThreeNodeKeys, nodeThreePkey);
+    await addPeer(provider, rootKeyPair, nodeThreeDid, nodeThreeNodeKeys, nodeThreePkey);
+    await addValidator(nodeThreeUrl, nodeThreeSeed, rootKeyPair);
   } catch(e) {
     console.log(e);
   }
@@ -166,7 +166,8 @@ async function addValidatorFour(provider, rootKeyPair) {
     decodedPeerId: '0x002408011220c81bc1d7057a1511eb9496f056f6f53cdfe0e14c8bd5ffca47c70a8d76c1326d'
   }
   try {
-    await addValidator(provider, nodeFourUrl, nodeFourSeed, rootKeyPair, nodeFourDid, nodeFourNodeKeys, nodeFourKey);
+    await addPeer(provider, rootKeyPair, nodeFourDid, nodeFourNodeKeys, nodeFourKey);
+    await addValidator(nodeFourUrl, nodeFourSeed, rootKeyPair);
   } catch(e) {
     console.log(e);
   }
@@ -183,10 +184,12 @@ async function addKeys() {
   const provider: any = await createConnection(nodeUrl);
   const keyring = new Keyring({ type: 'sr25519' });
   const rootKeyPair = await keyring.addFromUri('//Alice');
+  // await sleep(10000);
   // await addValidatorOne(provider, rootKeyPair);
   await addValidatorTwo(provider, rootKeyPair);
   await addValidatorThree(provider, rootKeyPair);
   await addValidatorFour(provider, rootKeyPair);
+  console.log('Done');
 }
 
 addKeys();
