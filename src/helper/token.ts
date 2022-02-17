@@ -29,15 +29,16 @@ function checkTokenAccountsEqual(nodeATokenAccs, nodeBTokenAccs) {
   // }
   let flag = true;
   nodeATokenAccs.forEach(accountA => {
+    flag = true;
     let accountB: any = nodeBTokenAccs.find((t: any) => (t.did == accountA.did && t.currencyCode == accountA.currencyCode));
     if (!accountB) {
       flag = false;
-      console.log('Undefined B', accountA, accountB);
+      console.log({msg: 'Undefined B', accountA, accountB});
       return;
     }
     if (!checkTkAccEq(accountA, accountB)) {
       flag = false;
-      console.log('Not Equal', accountA, accountB);
+      console.log({msg: 'Not Equal', accountA, accountB});
     }
   });
   return flag;

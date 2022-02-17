@@ -16,11 +16,12 @@ import { syncVcs } from "./src/sync-vcs";
 async function main() {
   const localUrl = 'ws://127.0.0.1:9944';
   const devUrl = 'wss://n3testnet.metabit.exchange';
-  const testnetUrl = 'wss://n2testnet.metabit.exchange';
+  // const testnetUrl = 'wss://n2testnet.metabit.exchange';
   const newNodeUrl = 'wss://n4testnet.metabit.exchange';
+  let newTestnetUrl = 'ws://54.169.1.74:9944';
 
   let syncFromUrl = devUrl;
-  let syncToUrl = localUrl;
+  let syncToUrl = newTestnetUrl;
 
   await cryptoWaitReady();
 

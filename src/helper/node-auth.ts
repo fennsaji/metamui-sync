@@ -47,7 +47,7 @@ async function addWellKnownNode(
             });
         if (dispatchError) {
           reject(new Error(dispatchError.toString()));
-        } else if (status.isFinalized) {
+        } else if (status.isInBlock) {
           resolve(true);
         }
       });
@@ -123,6 +123,7 @@ function checkNAEqual(nodeA, nodeB) {
 function checkNodeAuthsEqual(nodeAPeerDatas, nodeBPeerDatas) {
   let flag = true;
   nodeAPeerDatas.forEach(nodeA => {
+    flag = true;
     let nodeB: any = nodeBPeerDatas.find((t: any) => (t.peerId == nodeA.peerId));
     if (!nodeB) {
       flag = false;

@@ -10,6 +10,22 @@ async function addKey(node, {suri, aura, gran}) {
   await node.rpc.author.insertKey('gran', suri, gran.key);
 }
 
+async function addNodeOneAliceKeys() {
+  const nodeOneUrl = 'ws://127.0.0.1:9944';
+  const nodeOne = await createConnection(nodeOneUrl);
+  let nodeOneKeys = {
+    suri: '//Alice',
+    aura: {
+      key: '0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d'
+    },
+    gran: {
+      key: '0x88dc3417d5058ec4b4503e0c12ea1a0a89be200fe98922423d4334014fa6b0ee'
+    },
+  }
+  await addKey(nodeOne, nodeOneKeys);
+
+}
+
 async function addNodeOneKeys() {
   const nodeOneUrl = 'ws://127.0.0.1:9944';
   const nodeOne = await createConnection(nodeOneUrl);
@@ -174,7 +190,8 @@ async function addValidatorFour(provider, rootKeyPair) {
 }
 
 async function addKeys() {
-  // addNodeOneKeys();
+  await addNodeOneAliceKeys();
+  // await addNodeOneKeys();
   // addNodeTwoKeys();
   // addNodeThreeKeys();
   // addNodeFourKeys();
@@ -186,9 +203,9 @@ async function addKeys() {
   const rootKeyPair = await keyring.addFromUri('//Alice');
   // await sleep(10000);
   // await addValidatorOne(provider, rootKeyPair);
-  await addValidatorTwo(provider, rootKeyPair);
-  await addValidatorThree(provider, rootKeyPair);
-  await addValidatorFour(provider, rootKeyPair);
+  // await addValidatorTwo(provider, rootKeyPair);
+  // await addValidatorThree(provider, rootKeyPair);
+  // await addValidatorFour(provider, rootKeyPair);
   console.log('Done');
 }
 

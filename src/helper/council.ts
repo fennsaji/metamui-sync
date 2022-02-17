@@ -114,6 +114,7 @@ function checkProposalEqual(proposalA, proposalB) {
 function checkIfProposalsEqual(proposals, newProposals) {
   let flag = true;
   proposals.forEach(proposalA => {
+    flag = true;
     let proposalB: any = newProposals.find((t: any) => (t.proposalHash == proposalA.proposalHash));
     if (!proposalB) {
       flag = false;

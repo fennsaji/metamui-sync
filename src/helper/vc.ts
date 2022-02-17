@@ -38,9 +38,9 @@ async function storeVC(vcHex, sudoKeyPair, provider, nonce) {
 
 function checkVCEq(vcA, vcB) {
   let flag = true;
-  // if (vcA.is_vc_used !== vcB.is_vc_used) {
-  //   flag = false;
-  // }
+  if (vcA.is_vc_used !== vcB.is_vc_used) {
+    flag = false;
+  }
   if (vcA.owner !== vcB.owner) {
     flag = false;
   }
@@ -55,11 +55,11 @@ function checkVCEq(vcA, vcB) {
       flag = false;
     }
   })
-  // vcA.signatures.forEach(sig => {
-  //   if(!vcB.signatures.includes(sig)) {
-  //     flag = false;
-  //   }
-  // })
+  vcA.signatures.forEach(sig => {
+    if(!vcB.signatures.includes(sig)) {
+      flag = false;
+    }
+  })
   return flag;
 }
 
@@ -70,17 +70,18 @@ function checkVCsEqual(nodeAVCs, nodeBVCs) {
   if(!nodeAVCs || nodeAVCs.length == 0) {
     return false;
   }
-  let flag = true;
+  let flag;
   nodeAVCs.forEach(vcA => {
+    flag = true;
     let vcB: any = nodeBVCs.find((t: any) => t.hash == vcA.hash);
     if (!vcB) {
       flag = false;
-      console.log({vcA, vcB, msg: 'Not Equal'});
+      console.log({vcType: vcA.vc_type, vcA, vcB, msg: 'Not Equal'});
       return;
     }
     if(!checkVCEq(vcA, vcB)) {
       flag = false;
-      console.log({vcA, vcB, msg: 'Not Equal'});
+      console.log({vcType: vcA.vc_type, vcA, vcB, msg: 'Not Equal'});
     }
   });
   return flag;
