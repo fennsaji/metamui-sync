@@ -20,5 +20,13 @@
         "preLaunchTask": "tsc: build - tsconfig.json",
         "outFiles": ["${workspaceFolder}/bin/**/*.js"]
       },
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "Run Weights",
+        "program": "${workspaceFolder}/weights.ts",
+        "preLaunchTask": "tsc: build - tsconfig.json",
+        "outFiles": ["${workspaceFolder}/bin/**/*.js"]
+      },
     ]
   }

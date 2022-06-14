@@ -26,6 +26,22 @@ async function addNodeOneAliceKeys() {
 
 }
 
+async function addNodeOneBobKeys() {
+  const nodeOneUrl = 'ws://127.0.0.1:9944';
+  const nodeOne = await createConnection(nodeOneUrl);
+  let nodeOneKeys = {
+    suri: '//Bob',
+    aura: {
+      key: '0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d'
+    },
+    gran: {
+      key: '0x88dc3417d5058ec4b4503e0c12ea1a0a89be200fe98922423d4334014fa6b0ee'
+    },
+  }
+  await addKey(nodeOne, nodeOneKeys);
+
+}
+
 async function addNodeOneKeys() {
   const nodeOneUrl = 'ws://127.0.0.1:9944';
   const nodeOne = await createConnection(nodeOneUrl);
@@ -139,6 +155,12 @@ async function addValidatorOne(rootKeyPair) {
   await addValidator(nodeOneUrl, nodeOneSeed, rootKeyPair);
 }
 
+async function addValidatorBobTwo(rootKeyPair) {
+  let nodeOneUrl = 'ws://127.0.0.1:9945';
+  let nodeOneSeed = '//Bob';
+  await addValidator(nodeOneUrl, nodeOneSeed, rootKeyPair);
+}
+
 async function addValidatorTwo(provider, rootKeyPair) {
   let nodeTwoUrl = 'ws://127.0.0.1:9945';
   let nodeTwoSeed = 'fault ethics tank electric perfect inspire quiz unlock inch slide mom account';
@@ -149,8 +171,16 @@ async function addValidatorTwo(provider, rootKeyPair) {
     peerId: '12D3KooWQYV9dGMFoRzNStwpXztXaBUjtPqi6aU76ZgUriHhKust',
     decodedPeerId: '0x002408011220dacde7714d8551f674b8bb4b54239383c76a2b286fa436e93b2b7eb226bf4de7'
   }
-  await addPeer(provider, rootKeyPair, nodeTwoDid, nodeTwoNodeKeys, nodeTwoPkey);
-  await addValidator(nodeTwoUrl, nodeTwoSeed, rootKeyPair);
+  try {
+    await addPeer(provider, rootKeyPair, nodeTwoDid, nodeTwoNodeKeys, nodeTwoPkey);
+  } catch(e) {
+    console.log(e);
+  }
+  try {
+    await addValidator(nodeTwoUrl, nodeTwoSeed, rootKeyPair);
+  } catch(e) {
+    console.log(e);
+  }
 }
 
 async function addValidatorThree(provider, rootKeyPair) {
@@ -165,6 +195,10 @@ async function addValidatorThree(provider, rootKeyPair) {
   }
   try {
     await addPeer(provider, rootKeyPair, nodeThreeDid, nodeThreeNodeKeys, nodeThreePkey);
+  } catch(e) {
+    console.log(e);
+  }
+  try {
     await addValidator(nodeThreeUrl, nodeThreeSeed, rootKeyPair);
   } catch(e) {
     console.log(e);
@@ -183,29 +217,113 @@ async function addValidatorFour(provider, rootKeyPair) {
   }
   try {
     await addPeer(provider, rootKeyPair, nodeFourDid, nodeFourNodeKeys, nodeFourKey);
+  } catch(e) {
+    console.log(e);
+  }
+  try {
     await addValidator(nodeFourUrl, nodeFourSeed, rootKeyPair);
   } catch(e) {
     console.log(e);
   }
 }
 
+async function addValidatorFive(provider, rootKeyPair) {
+  let nodeFourUrl = 'ws://127.0.0.1:9948';
+  let nodeFourSeed = 'symbol accident heart toss time fiber canyon ring shuffle peasant thrive indoor';
+  let nodeFourDid = 'did:ssid:nodeFive';
+  let nodeFourKey = '0x7cd9c7362bd3f59c913c102a9475c4ed09ef23bf3fcd4f4d65c410dc7a20182d';
+  let nodeFourNodeKeys = {
+    key: 'e49b64a499c7e34aa09619df67f49832db49d512a2b32c9bcf9360d3410c1c42',
+    peerId: '12D3KooWJyZwW3oPaAQ1zaq8nSw45cxF5wag4hG8pzdkoTeEcAyk',
+    decodedPeerId: '0x0024080112208814b84b0caec01345bb5764c2cb90f4051c1c25173de5c09fbbc28d61852507'
+  }
+  try {
+    await addPeer(provider, rootKeyPair, nodeFourDid, nodeFourNodeKeys, nodeFourKey);
+  } catch(e) {
+    console.log(e);
+  }
+  try {
+    await addValidator(nodeFourUrl, nodeFourSeed, rootKeyPair);
+  } catch(e) {
+    console.log(e);
+  }
+}
+
+async function payoutStakers(era, keypair, provider, nonce=null) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const tx = provider.tx.staking.payoutStakers(keypair.publicKey, era);
+      nonce = nonce ?? await provider.rpc.system.accountNextIndex(keypair.address);
+      let signedTx = tx.sign(keypair, { nonce });
+      await signedTx.send(function ({ status, dispatchError, events }) {
+          events
+            .forEach(({ event: { data: [result] } }) => {
+              if (result.isError) {
+                let error = result.asError;
+                if (error.isModule) {
+                  const decoded = provider.registry.findMetaError(error.asModule);
+                  const { docs, name, section } = decoded;
+
+                  reject(new Error(`${section}.${name}`));
+                } else {
+                  reject(new Error(error.toString()));
+                }
+              }
+            });
+        if (dispatchError) {
+          reject(new Error(dispatchError.toString()));
+        } else if (status.isReady) {
+          resolve(signedTx.hash.toHex())
+        }
+      });
+    } catch (err) {
+      // console.log(err);
+      reject(err);
+    }
+  });
+}
+
+async function payoutAllStakers(provider) {
+  let eraStart = 86;
+  let eraEnd = 90;
+  let aliceSeed = '//Alice';
+  let bobSeed = '//Bob';
+  let charlieSeed = '//Charlie';
+  const keyring = new Keyring({ type: 'sr25519' });
+  const aliceKeyPair = await keyring.addFromUri(aliceSeed);
+  const bobKeyPair = await keyring.addFromUri(bobSeed);
+  const charlieKeyPair = await keyring.addFromUri(charlieSeed);
+  for (let i = eraStart; i <= eraEnd; i++) {
+    await Promise.all([
+      await payoutStakers(i, aliceKeyPair, provider),
+      await payoutStakers(i, bobKeyPair, provider),
+      await payoutStakers(i, charlieKeyPair, provider)
+    ]);
+  }
+}
+
+
 async function addKeys() {
-  await addNodeOneAliceKeys();
+  // await addNodeOneAliceKeys();
   // await addNodeOneKeys();
   // addNodeTwoKeys();
   // addNodeThreeKeys();
   // addNodeFourKeys();
   // addNodeFiveKeys();
 
-  const nodeUrl = 'ws://127.0.0.1:9944';
+  // const nodeUrl = 'ws://127.0.0.1:9944';
+  const nodeUrl = 'ws://54.255.191.47:9944';
   const provider: any = await createConnection(nodeUrl);
   const keyring = new Keyring({ type: 'sr25519' });
   const rootKeyPair = await keyring.addFromUri('//Alice');
   // await sleep(10000);
-  // await addValidatorOne(provider, rootKeyPair);
+  // await addValidatorOne(rootKeyPair);
+  // await addValidatorBobTwo(rootKeyPair);
   // await addValidatorTwo(provider, rootKeyPair);
   // await addValidatorThree(provider, rootKeyPair);
   // await addValidatorFour(provider, rootKeyPair);
+  // await addValidatorFive(provider, rootKeyPair);
+  await payoutAllStakers(provider);
   console.log('Done');
 }
 
